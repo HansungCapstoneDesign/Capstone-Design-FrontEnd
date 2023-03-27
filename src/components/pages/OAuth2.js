@@ -30,7 +30,9 @@ const OAuth2 = () => {
                 if(token?.id_token && token?.access_token) {
                     sessionStorage.setItem('id_token', token.id_token);
                     sessionStorage.setItem('access_token', token.access_token);
-                    navigate('/');
+                    // 리소스 서버에게 유저의 회원가입 여부 확인하는 부분
+                    // 만약에 회원가입을 해야 한다면
+                    navigate('/welcome');
                 }
             }).catch((err) => {
                 console.log(err);
