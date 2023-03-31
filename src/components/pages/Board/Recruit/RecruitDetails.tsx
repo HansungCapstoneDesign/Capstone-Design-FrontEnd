@@ -1,40 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Time from "../../../layout/Time";
 import { Avatar, Box, Stack, Typography, IconButton } from "@mui/material";
 import BookmarkIcon from "@mui/icons-material/BookmarkBorder";
 import Person2OutlinedIcon from "@mui/icons-material/Person2Outlined";
-import { Reply } from "../../../model/reply";
-import axios from "axios";
+import { data } from "../../../data/RecruitData";
 
-//자유 상세보기 인터페이스
-interface FreeDetailItems {
+//모집 상세보기 인터페이스
+export interface RecruitDetailItems {
   id: number;
   title: string;
-  content: string;
-  //imgUrl?: Array<string>;
   writer: string;
-  profileImg: string;
-  stuId: number;
+  profileImg: string; //사용자 프로필 사진 img 링크. 현재는 <Avartar />의 기본 이미지가 들어감
   createdDate: string;
   modifiedDate?: string;
   bookmark: number;
   reply: number;
-  replies?: Array<Reply> | undefined;
   views: number; //조회수
+  stuId: number; //사용자 학번
+  imgUrl?: Array<string>; //이미지
+  require: string; //필수조건: 분반명 등
+  optional?: string; //기타, 우대조건: 학점, 기술스택 등
+  party: number; //모집할 인원수
+  gathered: number; //모집된 인원 수. User 완성되는대로 Array<User>로 변경
 }
 
-const FreeDetails: React.FC = (): JSX.Element => {
-  const [postItem, setPostItem] = useState<FreeDetailItems | undefined>();
-  const { id } = useParams();
-
-  useEffect(() => {
-    axios
-      .get(`/api/freeBoards/${id}`)
-      .then((res) => setPostItem(res.data.data))
-      .catch((err) => console.log(err));
-  }, []);
-
+const RecruitDetails: React.FC = (): JSX.Element => {
+  const { id } = useParams<{ id: string }>();
+  const [postItem, setPostItem] = useState<RecruitDetailItems | undefined>(
+    data[3] as RecruitDetailItems
+  );
   const detailPosting = postItem ? (
     <>
       <Box sx={{ paddingLeft: 3, paddingRight: 3 }}>
@@ -59,14 +54,24 @@ const FreeDetails: React.FC = (): JSX.Element => {
               sx={{ width: "30px", height: "30px", marginRight: "5px" }}
             />
             <Typography variant="body2">
-              {`${postItem.writer} (${postItem.stuId})`}
+              {`${postItem.writer} (사용자 학번)`}
             </Typography>
           </Stack>
         </Box>
 
         <Box sx={{ marginBottom: 1 }}>
-          <div dangerouslySetInnerHTML={{ __html: postItem.content }} />
+          <div dangerouslySetInnerHTML={{ __html: postItem.require }} />
           {/* 이미지에 대해서는 추후 논의 후 추가)*/}
+          {!postItem.optional ? (
+            <></>
+          ) : (
+            <div dangerouslySetInnerHTML={{ __html: postItem.optional }} />
+          )}
+        </Box>
+        <Box borderRadius={7}>
+          <Typography variant="h4">
+            {postItem.gathered} / {postItem.party}
+          </Typography>
         </Box>
         <Box sx={{ marginTop: 3, marginBottom: 3 }}>
           <Stack direction="row" sx={{ disply: "flex", justifyContent: "end" }}>
@@ -78,7 +83,6 @@ const FreeDetails: React.FC = (): JSX.Element => {
             </IconButton>
           </Stack>
         </Box>
-
         <Box>
           <Typography
             variant="body1"
@@ -111,4 +115,4 @@ const FreeDetails: React.FC = (): JSX.Element => {
   );
 };
 
-export default FreeDetails;
+export default RecruitDetails;
