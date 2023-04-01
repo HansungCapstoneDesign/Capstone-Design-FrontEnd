@@ -132,7 +132,7 @@ const QnADetails: React.FC = () => {
             mb: 2,
           }}
         />
-        <Reply />
+        <Reply id={id ? String(id) : undefined} />
       </Box>
     </>
   ) : (
