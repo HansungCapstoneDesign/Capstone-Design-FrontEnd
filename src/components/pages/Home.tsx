@@ -9,6 +9,8 @@ import { Fab, Box } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import { generateCodeChallenge, generateCodeVerifier } from "../pkce/pkce";
+import axios from "axios";
+import { useEffect } from "react";
 
 const WritingButton = () => {
   const navigate = useNavigate();
@@ -40,6 +42,25 @@ const Home: React.FC = () => {
 
     navigate(`/redirect`);
   };
+
+  // const handleLogout =() =>{
+  //     axios
+  //     .get("http://localhost:8081/logout")
+  //     .then((res)=>{console.log(res)})
+      
+  //     sessionStorage.clear();
+  //     window.location.href = "/";
+  // }
+  
+  //로그인한 유저정보 받아오는 api test 
+  useEffect(()=>{
+    axios
+    .get("/api/user-info")
+    .then((res)=>console.log(res));
+      
+  },[])
+
+
   return (
     <>
       <button onClick={handleLogin}>로그인</button>
