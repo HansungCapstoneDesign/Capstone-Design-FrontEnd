@@ -150,7 +150,7 @@ const FreeDetails = () => {
       </Grid>
 
       <Reply postingID={id} />
-    </>
+      </>
   ) : (
     <Loading />
   );

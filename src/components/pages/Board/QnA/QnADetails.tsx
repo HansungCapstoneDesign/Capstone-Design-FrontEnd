@@ -10,7 +10,7 @@ import {
   Stack,
 } from "@mui/material";
 import Time from "../../../layout/Time";
-import Reply from "../../../layout/Reply/QnAReply";
+import Reply from "../../../layout/Reply/Reply";
 import { skillData } from "../../../data/SkillData";
 import Money from "@mui/icons-material/MonetizationOn";
 import { PostingCrumbs } from "../../../layout/postingDetail/postingCrumbs";
@@ -47,7 +47,7 @@ const QnADetails = () => {
   const [postItem, setPostItem] = useState<DetailItems | undefined>();
 
   //axios get 할 때 받아올 게시글 번호
-  let { id } = useParams();
+  const { id } = useParams() as { id: string };
 
   useEffect(() => {
     axios({
@@ -149,12 +149,14 @@ const QnADetails = () => {
           </Stack>
           {/*bookmarkNviews(postItem.bookmark, onClickBookmark, bookmarkCount) 북마크 기능 추가 시 여기 주석만 지워주시면 됩니다. 은서*/}
         </Grid>
-
+      
         {/*댓글 총 몇 개 인지*/}
         {replyCount(postItem.reply)}
       </Grid>
       {/*댓글 입력창 텍스트필드로 변경*/}
-      <Reply postingID={id} />
+      <Box>
+        <Reply postingID={id} />
+      </Box>
     </>
   ) : (
     //postItems 데이터 없는 경우

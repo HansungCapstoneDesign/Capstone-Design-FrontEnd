@@ -170,7 +170,7 @@ const FreeReply = ({ postingID }: ReplyProps) => {
               </Box>
               <NestedReplyField
                 onAddNested={handleAddNested}
-                parentID={reply.id}
+                parentId={reply.id}
               />
               {replyContainer(replies, reply.id)}
             </div>
@@ -218,7 +218,7 @@ const FreeReply = ({ postingID }: ReplyProps) => {
             </Box>
             <NestedReplyField
               onAddNested={handleAddNested}
-              parentID={value.id}
+              parentId={value.id}
             />
             {replyContainer(replyData, value.id)}
           </div>
