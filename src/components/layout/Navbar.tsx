@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { generateCodeChallenge, generateCodeVerifier } from "../pkce/pkce";
-import { Button, Box, IconButton, Menu, MenuItem, Typography } from "@mui/material";
+import { Button, Box, Grid, Menu, MenuItem } from "@mui/material";
 import Profile from "../layout/Profile";
-import axios from "axios";
-import {checkLogin} from "../checkLogin";
-import {logoutHandler} from "../logoutHandler";
+import { checkLogin } from "../checkLogin";
+import { logoutHandler } from "../logoutHandler";
+import { getCurrentUserInfo } from "../getCurrentUserInfo";
+import SearchField from "./SearchField";
+import pingpong from "../asset/logo/pingpong.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
-
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -22,27 +23,26 @@ const Navbar = () => {
 
   const [isLogin, setIsLogin] = useState<boolean>(false);
   const [nickname, setNickname] = useState<string>("");
+  const [profileImg, setProfileImg] = useState<string | null>(null);
 
   // sessionStorage로부터 저장된 토큰 있는지 처음 렌더링할때만 확인
   // 토큰여부에 따라 네비게이션 바 상단 로그인 - 로그아웃 버튼 조절
   // 로그아웃 기능 추가 필요!!
   useEffect(() => {
     checkLogin()
-        .then((res) => {
-          if (res) {
-            setIsLogin(true);
-            axios({
-              method: "get",
-              url: "/api/user-info"
-            }).then((res) => {
-              setNickname(res.data.nickname);
-            }).catch((err) => {
-              console.log(err);
-            });
-          } else {
-            setIsLogin(false);
-          }
-        })
+      .then((res) => {
+        if (res) {
+          setIsLogin(true);
+          getCurrentUserInfo()
+            .then((userInfo) => {
+              setNickname(userInfo.nickname);
+              setProfileImg(userInfo.profileImg);
+            })
+            .catch((err) => console.log(err));
+        } else {
+          setIsLogin(false);
+        }
+      })
   }, []);
 
   // 백에서 Home페이지에 추가해둔 로그인 핸들러 그대로 가져왔습니다
@@ -89,15 +89,31 @@ const Navbar = () => {
     navigate("/mypage");
     handleClose();
   };
-  
+
   return (
-    <div>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mt:3, mb:4 }}>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-start"}}
-        >
-          <Box sx={{width:100, backgroundColor:'#ddd', mr: 3}}/>
-          <Button onClick={moveToHome} className="navButton">홈</Button>
+    <>
+      <Grid container direction={"row"} spacing={"1rem"} alignItems={"center"} sx={{ mt: "1.5rem", mb: "2rem" }} >
+        <Grid item container xs={12} md={6}>
+          <img
+            src={`${pingpong}`}
+            onClick={moveToHome}
+            style={{
+              width: "10rem",
+              cursor: "default",
+              transition: "all 0.3s",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.cursor = "pointer";
+              e.currentTarget.style.filter = "drop-shadow(1.5px 1.5px 1.5px #555)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.cursor = "default";
+              e.currentTarget.style.filter = "none";
+            }}
+          />
+          <Button className="navButton"
+          onClick={moveToHome}
+          >홈</Button>
           <Button
             className="navButton"
             aria-controls={open ? "basic-menu" : undefined}
@@ -111,23 +127,24 @@ const Navbar = () => {
             <MenuItem onClick={moveToRecruit}>구인게시판</MenuItem>
           </Menu>
           <Button onClick={moveToNotice} className="navButton">공지사항</Button>
-        </Box>
-        <Box sx={{display:'flex', justifyContent: "space-between"}}>
+        </Grid>
+
+        <Grid item xs={12} md={6} container direction="row" alignItems="center" justifyContent={"flex-end"}>
           {isLogin ? (
-          <>
-            <Button className="profile" onClick={moveToMyPage}>
-              <Profile nickname={nickname} size={25}/>
-            </Button>
-            <Button onClick={handleLogin} className="loginButton">
-              로그아웃
-            </Button>
-          </>
-          ) : (<Button onClick={handleLogin} className="loginButton">로그인</Button>
+            <>
+              <SearchField />
+              <Button className="profile" onClick={moveToMyPage}>
+                <Profile nickname={nickname} imgUrl={profileImg} size={28} />
+              </Button>
+              <Button onClick={handleLogin} className="loginButton">
+                로그아웃
+              </Button>
+            </>) : (
+            <Button onClick={handleLogin} className="loginButton">로그인</Button>
           )}
-          
-      </Box>
-      </Box>
-    </div>
+        </Grid>
+      </Grid>
+    </>
   );
 };
 

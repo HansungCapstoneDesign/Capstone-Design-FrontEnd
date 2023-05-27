@@ -7,12 +7,14 @@ import UserIcon from '@mui/icons-material/AccountCircleOutlined';
 import BookmarkIcon from '@mui/icons-material/BookmarkBorder';
 import ChatIcon from '@mui/icons-material/ChatBubbleOutline';
 import Profile from "../layout/Profile";
+import { BoardType } from "../model/board";
 
 interface HomeBoardItems {
     id: number;
     title: string;
     content: string;
     writer: string;
+    profileImg: string | null;
     createdDate: string;
     bookmark: number;
     reply: number;
@@ -48,8 +50,6 @@ const HomeBoard = (props: HomeBoardProps) => {
         }
     };
 
-    // HomeFreeBaord, HomeQnaBoard -> HomeBoard 통합
-    // home에서 board에 따라 api 설정하도록 변경
     useEffect(() => {
         axios({
             method : "get",
@@ -69,10 +69,10 @@ const HomeBoard = (props: HomeBoardProps) => {
 
     }, []);
 
-    const boardName: string = board === "free" ? "자유게시판"
-        : board === "questions" ? "Q&A게시판"
-        : board === "recruit" ? "구인게시판"
-        : board === "notice" ? "공지사항" : "";
+    const boardName: string = board === BoardType.free ? "자유게시판"
+        : board === BoardType.question ? "Q&A게시판"
+        : board === BoardType.recruit ? "구인게시판"
+        : board === BoardType.notice ? "공지사항" : "";
 
     return (
         <>
@@ -106,7 +106,7 @@ const HomeBoard = (props: HomeBoardProps) => {
                     onClick={() => props.loginState ? goToPost(posting.id) : openInfoModal()}>
                         <Box sx={{display:'flex', justifyContent:'space-between'}}>
                             <Box sx={{display:'flex'}}>
-                                 <Profile nickname={posting.writer} size={30}/>
+                                 <Profile nickname={posting.writer} imgUrl={posting.profileImg} size={30}/>
                                 <Typography sx={{pt:0.5, pl:1.5}}>{posting.writer}</Typography>
                             </Box>
                             <Box sx={{display:'flex', justifyContent:'flex-end'}}>

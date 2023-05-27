@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import { Box, TextField, Button } from "@mui/material";
+import React, { useState, ChangeEvent } from "react";
+import { Grid, TextField, Button, Paper } from "@mui/material"
 
-interface EditReplyProps {
+export interface EditReplyProps {
   article: string;
-  id : number;
+  id: number;
   parentId?: number;
   isEditing: boolean;
+  setIsEditing : (isEditing: boolean) => void;
   onChangeReply: (id:number, article:string, parentId?: number) => void;
 }
 
@@ -13,33 +14,41 @@ interface EditReplyProps {
 const EditReplyField = (props: EditReplyProps) => {
   const [editArticle, setEditArticle] = useState(props.article);
 
-  const handleEditArticleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCancel = () => {
+    props.setIsEditing(false);
+  }
+
+  const handleEditArticleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setEditArticle(event.target.value);
   };
 
   const handleSubmit = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
-    // 변경된 article 내용 전달
     props.onChangeReply(props.id, editArticle, props.parentId);
   };
+  
+  const isDisabled = () => {
+    return editArticle.trim() === '';
+  }
+
 
   return (
-    <div style={{ width: '100%' }}>
-      {props.isEditing && 
-        <>
-        <Box sx={{display:"flex", justifyContent:"space-evenly"}}>
+    <>
+      <Grid container direction={"column"} pl={"3rem"} pr={"3rem"} spacing={"0.5rem"}>
+        <Grid item>
           <TextField 
             variant="standard" 
             multiline 
-            fullWidth
             value={editArticle} 
             onChange={handleEditArticleChange} 
           />
-          <Button onClick={handleSubmit}>수정</Button>
-        </Box>
-        </>
-      }
-    </div>
+        </Grid>
+        <Grid item direction={"row"} display={"flex"} justifyContent={"flex-end"}>
+          <Button onClick={handleCancel}>취소</Button>
+          <Button onClick={handleSubmit} disabled={isDisabled()}>수정</Button>
+        </Grid>
+      </Grid>
+    </>
   );
 };
 

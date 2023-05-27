@@ -13,8 +13,7 @@ export interface User {
   password: String;
   name: String;
   nickname: String;
-  profileImg: String;
-  point: number;
+  profileImg: String | null;
   track1: Track;
   track2: Track;
   showOff?: Array<String>;

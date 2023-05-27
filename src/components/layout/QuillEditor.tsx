@@ -8,9 +8,10 @@ import "highlight.js/styles/atom-one-dark.css";
 import axios from 'axios';
 import "../style/Board.css";
 
+
 interface QuillProps  {
     onAddQuill: (content:string) => void
-    content?: string
+    content: string
 }
 
 // Undo and redo functions for Custom Toolbar
@@ -21,6 +22,7 @@ function undoChange() {
 function redoChange() {
 
 }
+
 
 // Add sizes to whitelist and register them
 const Size = Quill.import("formats/size");
@@ -46,11 +48,12 @@ hljs.configure({
 const EditorToolbar = (props : QuillProps) => {
     const QuillRef = useRef<ReactQuill>();
     const [content, setContent] = useState<string>("");
+    const feUrl = process.env.REACT_APP_FRONT_URL;
 
     useEffect(() => {
-        if (props.content) setContent(props.content);
+        setContent(props.content);
     }, [props.content])
-
+    
     // 이미지를 업로드 하기 위한 함수
     const imageHandler = () => {
 
@@ -67,20 +70,26 @@ const EditorToolbar = (props : QuillProps) => {
             const files: FileList | null = input.files;
             const fileArray = Array.prototype.slice.call(files);
 
+            //test용(이미지 이름 설정)
+            const min = 1; // 최소값
+            const max = 1000; // 최대값
+            const randomInt = Math.floor(Math.random() * (max - min + 1)) + min; // min 이상 max 이하의 정수 난수 생성
+
             fileArray.forEach((file) => {
                 fileList.push(file);
             })
             fileList.forEach((file) => {
-                formData.append('multipartFiles', file);
+                formData.append('file', file);
             })
+            formData.append("nameFile",randomInt.toString())
                 axios({
                     method: "post",
-                    url: "/api/qna/image",
+                    url: "/api/files",
                     headers: {"Content-Type": "multipart/form-data"},
                     data: formData,
                 }).then((response)=>{
                     console.log("###", response);
-                    const url = "http://localhost:8080"+response.data;
+                    const url = `${feUrl}`+response.data;
                     const range = QuillRef.current?.getEditor().getSelection()?.index;
                     if (range !== null && range !== undefined) {
                         let quill = QuillRef.current?.getEditor();
@@ -160,7 +169,7 @@ const EditorToolbar = (props : QuillProps) => {
                         QuillRef.current = element;
                     }
                 }}
-                value={content}
+                value={props.content}
                 onChange={(content) => {
                     setContent(content);
                     props.onAddQuill(content);

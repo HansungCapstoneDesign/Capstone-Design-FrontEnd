@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useLayoutEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { Typography, Box, Chip, Grid, IconButton, Stack, Zoom } from "@mui/material";
-import Time from "../../../layout/Time";
+import { Typography, Box, Chip, Grid, Stack, Zoom } from "@mui/material";
 import Reply from "../../../layout/Reply/Reply";
 import { skillData } from "../../../data/SkillData";
-import Money from "@mui/icons-material/MonetizationOn";
 import { PostingCrumbs } from "../../../layout/postingDetail/postingCrumbs";
-import { replyCount } from "../../../layout/postingDetail/replyCount";
 import { userInfo } from "../../../layout/postingDetail/userInfo";
 import { PageName } from "../../../layout/postingDetail/postingCrumbs";
-import Loading from "../../../layout/Loading";
 import { BoardType } from "../../../model/board";
 import { UpdateSpeedDial } from "../../../layout/CRUDButtonStuff";
 import { getCurrentUserInfo } from "../../../getCurrentUserInfo";
 import Bookmark from "../../../layout/Bookmark";
+import TimeAndViews from "../../../layout/postingDetail/TimeAndViews";
+import File from "../../../layout/File";
+import { FileItem } from "../Free/FreeDetails";
+import { PostingSkeleton, useSkeleton } from "../../../layout/Skeletons";
 
 // Q&A 상세보기 데이터
 interface DetailItems {
@@ -22,7 +22,7 @@ interface DetailItems {
   title: string;
   content: string;
   writer: string;
-  profileImg: string;
+  profileImg: string | null;
   stuId: number;
   createdDate: string;
   modifiedDate?: string;
@@ -30,7 +30,6 @@ interface DetailItems {
   bookmark: number;
   views: number; //조회수
   reply: number;
-  point: number;
 }
 
 //Q&A 상세보기
@@ -38,14 +37,15 @@ const QnADetails = () => {
   //postItem은 상세보기에 들어갈 데이터 - DetailItems에 데이터 타입 지정
   const [postItem, setPostItem] = useState<DetailItems | undefined>();
   const [writerId, setWriterId] = useState<number>(0)
-  const [accessUserId, setAccessUserId] = useState<number>(0); //접속한 유저의 id
+  const [accessUserId, setAccessUserId] = useState<number>(0);
+  const [fileList, setFileList] = useState<FileItem[]>([]);
   const { id } = useParams() as { id: string };
   const postingId = Number(id);
 
   useEffect(() => {
     axios({
       method: "get",
-      url: "/api/qna/detail/" + id,
+      url: "/api/questions/detail/" + id,
     })
       .then((res) => {
         if (res.status === 200) {
@@ -60,13 +60,14 @@ const QnADetails = () => {
         }
       });
 
+
+
     // 해당 게시글 작성자의 userId 받아오기
     axios({
       method: "get",
-      url: `/api/qna/return/user-id/${id}`
+      url: `/api/questions/return/user-id/${id}`
     }).then((res) => {
       if (res.status === 200) {
-        console.log(res)
         setWriterId(res.data);
       }
     }).catch((err) => {
@@ -77,19 +78,30 @@ const QnADetails = () => {
     getCurrentUserInfo()
       .then(userInfo => setAccessUserId(userInfo.studentId))
       .catch(err => console.log(err));
+
+    axios({
+      method: "get",
+      url: `/api/questions/${id}/file-list`
+    })
+      .then((res) => {
+        setFileList(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }, []);
 
+  const loadingStatus: boolean = useSkeleton(800);
+
   //입력된 언어 맞게 이미지 출력
-  const Skill = postItem?.language
-    ? skillData.map((value) => {
+  const Skill = postItem?.language ?
+    skillData.map((value) => {
       if (postItem.language === value.name) {
-        return <>
-          <Typography sx={{ fontSize: "1.75rem" }}>
-            <img src={value.logo} width="72" height="72" style={{ marginRight: "0.75rem" }} />
-            <span style={{ fontWeight: "bold" }}>{postItem.language}</span>에 대한 질문입니다.</Typography></>;
+        return (
+          <img src={value.logo} width="35" height="35" />
+        )
       }
-    })
-    : <Typography sx={{ fontSize: "1.75rem" }}><span style={{ fontWeight: "bold" }}>?</span>에 대한 질문입니다.</Typography>;
+    }) : null
 
   /**
    * 글 작성자에게 게시글 수정, 삭제 버튼을 보여줌.
@@ -110,74 +122,60 @@ const QnADetails = () => {
   }
 
   const PostDetails = postItem ? (
-    //postItems 데이터 있는 경우 출력될 UI
     <>
-      <Grid container direction="column" rowSpacing={"3rem"}>
-        {/*게시판 이름, BreadCrumbs */}
+      <Grid container direction="column" rowSpacing={"1.5rem"} mb={"1rem"}>
         <Grid item xs={12}>
           <PostingCrumbs title={postItem.title} board="questions" />
         </Grid>
-        {/*게시글 제목 */}
         <Grid item xs={12}>
-          <Stack direction="row" spacing={1} sx={{ display: "flex", justifyContent: "start", alignItems:"center" }}>
-            <Typography variant="h1">{postItem.title}</Typography>
-            {(typeof postItem.modifiedDate === 'object') ?
-              null : <Chip label="modified" size="small" variant="outlined" color="error" />}
-          </Stack>
-        </Grid>
-        {/*작성자 정보 , 작성 시각 */}
-        <Grid item container xs={12} justifyContent={"space-between"}>
-          <Grid item xs={4}>
-            {userInfo(postItem.writer, postItem.stuId, postItem.profileImg)}
-          </Grid>
-          <Grid item justifyContent={"flex-end"}>
-            <Time date={postItem.createdDate} variant="h6" />
-          </Grid>
-        </Grid>
-
-        {/* 질문 분야 */}
-        <Grid item xs={12} sm={6} direction="row">
           {Skill}
         </Grid>
-
-        {/*게시글 내용 */}
-        <Grid item xs={12} sx={{ padding: "0 2.5rem" }}>
-          {/*코드블럭 배경 css 추가*/}
-          <div className="ql-snow">
-            <div
-              className="ql-editor"
-              dangerouslySetInnerHTML={{ __html: postItem.content }}
-            />
-          </div>
-          {/* 이미지에 대해서는 추후 논의 후 추가)*/}
-        </Grid>
-
-        <Grid item xs={12} sm={6} direction="row">
-          <Typography sx={{ fontSize: "1.75rem" }}>채택 시 <Money sx={{ color: "#ffcf40", fontSize: 28 }} /><span style={{ fontWeight: "bold" }}>{postItem.point}</span>포인트 지급!</Typography>
-        </Grid>
-
         <Grid item xs={12}>
+          <Stack direction="row" spacing={1} sx={{ display: "flex", justifyContent: "start", alignItems: "center" }}>
+            <Typography variant="h1" sx={{ fontWeight: "600" }}>{postItem.title}</Typography>
+            {(typeof postItem.modifiedDate === 'object') ?
+              null : <Chip label="수정됨" size="small" variant="outlined" color="error" />}
+          </Stack>
+        </Grid>
+        <Grid item xs={12} sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ display: "flex", justifyContent: "start", alignItems: "center" }}
+          >
+            {userInfo(postItem.writer, postItem.stuId, postItem.profileImg)}
+            {TimeAndViews(postItem.createdDate, postItem.views)}
+          </Stack>
           <Bookmark boardType={"questions"} id={id} />
         </Grid>
-        {/*댓글 총 몇 개 인지*/}
-        {replyCount(postItem.reply)}
+        {fileList.length > 0 &&
+          <Grid item xs={12}>
+            <File fileList={fileList} />
+          </Grid>
+        }
+        <Grid item xs={12} sx={{ m: "3rem 0rem 5rem" }}>
+          <div className="ql-snow">
+            <div className="ql-editor"
+              dangerouslySetInnerHTML={{ __html: postItem.content }} />
+          </div>
+        </Grid>
+        <Grid item>
+          <Reply board={BoardType.question} writerId={writerId} postingId={id} />
+        </Grid>
       </Grid>
-      {/*댓글 입력창 텍스트필드로 변경*/}
-      <Reply board={"qna"} writerId={writerId} postingId={id} />
       <Zoom in={true}>
         <Box>{displayUpdateSpeedDial(postItem.stuId, postItem.title, postItem.content)}</Box>
       </Zoom>
     </>
   ) : (
-    //postItems 데이터 없는 경우
-    <Loading />
+    null
   );
 
-  return (
-    <>
-      <Box sx={{ padding: "2.25rem 10rem 4.5rem" }}>{PostDetails}</Box>
-    </>
-  );
+  return <Box sx={{ padding: "2rem 10rem 4rem" }}>
+    {
+      loadingStatus ? PostDetails : <PostingSkeleton />
+    }
+  </Box>;
 };
 
 export default QnADetails;
