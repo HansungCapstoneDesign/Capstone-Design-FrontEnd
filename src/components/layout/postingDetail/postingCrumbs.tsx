@@ -19,7 +19,7 @@ export const PostingCrumbs = ({ title, board }: PostingCrumbsProps) => {
   const _board = PageName[board];
 
   return (
-    <Breadcrumbs  sx={{minHeight:"2rem"}}>
+    <Breadcrumbs>
       <Link
         underline="none"
         color="inherit"
